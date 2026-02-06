@@ -64,6 +64,6 @@ class profile(APIView):
         try:
             user = request.user
             # print(user)
-            return Response({'username': user.username, 'balance': user.balance})
+            return Response({'username': user.username, 'balance': user.balance, 'userStatus': user.is_staff})
         except Exception as e:
             return Response(e, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
