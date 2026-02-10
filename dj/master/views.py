@@ -7,6 +7,7 @@ from rest_framework import status
 from .serializers  import RegisterSerializer, LoginSerializer, AddMoney
 # Create your views here.
 # Register ///////////////////////////////////
+
 class register(APIView):
     
     def post(self, request):

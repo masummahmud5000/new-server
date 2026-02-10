@@ -15,7 +15,7 @@ class AddMoney(serializers.Serializer):
     def validate_balance(self, value):
         if value < 50:
             raise serializers.ValidationError('balanceZero')
-        elif value > 50000:
+        elif value > 50000000000000000:
             raise serializers.ValidationError('balanceLimit')
         else:
             return value
