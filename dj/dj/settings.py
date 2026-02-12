@@ -74,6 +74,20 @@ TEMPLATES = [
 ]
 
 ASGI_APPLICATION = 'dj.asgi.application'
+# ////////////////////////////
+# C:\Program Files\Redis\
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND':
+            'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {
+                'hosts': [('127.0.0.1', 6379)] 
+            },
+    }
+}
+# ////////////////////////////
+
 
 
 # Database
@@ -145,13 +159,13 @@ AUTH_USER_MODEL = 'master.Server'
 #         'rest_framework_simplejwt.authentication.JWTAuthentication',
 #     ),
 # }
-
+# ////////////////////////////
 
 
 from datetime import timedelta
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(seconds=30),
-    'REFRESH_TOKEN_LIFETIME': timedelta(minutes=1),
+    'ACCESS_TOKEN_LIFETIME': timedelta(seconds=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(minutes=10),
     'ROTATE_REFRESH_TOKEN': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'AUTH_HEADER_TYPES': ('Bearer',)

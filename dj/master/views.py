@@ -5,8 +5,13 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .serializers  import RegisterSerializer, LoginSerializer, AddMoney
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+from . permissions import StaffUser
 # Create your views here.
 # Register ///////////////////////////////////
+channel_layer = get_channel_layer()
+# //////////////////////////////////////
 
 class register(APIView):
     
@@ -60,15 +65,17 @@ class profile(APIView):
     def get(self, request):
         try:
             user = request.user
-            # print(user)
-            return Response({'username': user.username, 'balance': user.balance, 'userStatus': user.is_staff})
+            # async_to_sync(channel_layer.group_send)(
+            #     f'user_{user.id}',{'type': 'balance_update', 'balance': str(user.balance)}
+            # )
+            return Response({'username': user.username, 'userStatus': user.is_staff})
         except Exception as e:
             return Response(str(e), status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 # Add Money ///////////////////////////////////
 class addMoney(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, StaffUser]
 
     def post(self, request):
         try:        

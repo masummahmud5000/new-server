@@ -2,7 +2,9 @@
 from rest_framework import serializers
 from .models import Server
 from django.contrib.auth import authenticate
-
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+channel_layer = get_channel_layer()
 # Add Money ////////////////////////////////////////////////////////////////////
 from django.db.models import F
 from django.db import transaction
@@ -15,7 +17,7 @@ class AddMoney(serializers.Serializer):
     def validate_balance(self, value):
         if value < 50:
             raise serializers.ValidationError('balanceZero')
-        elif value > 50000000000000000:
+        elif value > 50000:
             raise serializers.ValidationError('balanceLimit')
         else:
             return value
@@ -38,6 +40,10 @@ class AddMoney(serializers.Serializer):
                 userLock.balance = F('balance') + balance
                 userLock.save(update_fields=['balance'])
                 userLock.refresh_from_db()
+
+                async_to_sync(channel_layer.group_send)(
+                f'user_{userLock.id}',{'type': 'balance_update', 'balance': str(userLock.balance)}
+                )
 
                 return userLock
         except:
