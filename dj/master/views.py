@@ -4,8 +4,7 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers  import RegisterSerializer, LoginSerializer, AddMoney
-from asgiref.sync import async_to_sync
+from .serializers  import RegisterSerializer, LoginSerializer, AddMoney, MoneyTransfer
 from channels.layers import get_channel_layer
 from . permissions import StaffUser
 # Create your views here.
@@ -65,9 +64,6 @@ class profile(APIView):
     def get(self, request):
         try:
             user = request.user
-            # async_to_sync(channel_layer.group_send)(
-            #     f'user_{user.id}',{'type': 'balance_update', 'balance': str(user.balance)}
-            # )
             return Response({'username': user.username, 'userStatus': user.is_staff})
         except Exception as e:
             return Response(str(e), status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -82,6 +78,24 @@ class addMoney(APIView):
             serial = AddMoney(instance=request.user, data=request.data, context={'request': request})
 
             if serial.is_valid():    
+                serial.save()
+                return Response(status=status.HTTP_200_OK)
+            else:
+                return Response(serial.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response(str(e), status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+# Money Transfer ///////////////////////////////////
+class moneyTransfer(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        try:
+            # print(request.user.is_staff)
+            serial = MoneyTransfer(instance=request.user,data=request.data, context={'request': request})
+
+            if serial.is_valid():
                 serial.save()
                 return Response(status=status.HTTP_200_OK)
             else:

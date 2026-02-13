@@ -45,18 +45,18 @@ class BalanceSlash(AsyncWebsocketConsumer):
         await self.accept()
         await self.send_init(user)
 
-    # async def disconnect(self, close_code):
-    #     if hasattr(self, "group_name"):
-    #         await self.channel_layer.group_discard(
-    #             self.group_name, self.channel_name
-    #         )
+    async def disconnect(self, close_code):
+        if hasattr(self, "group_name"):
+            await self.channel_layer.group_discard(
+                self.group_name, self.channel_name
+            )
 
     async def send_init(self, user):
         await self.send(text_data=json.dumps({
             'balance': str(user.balance)
         }))
     
-    async def balance_update(self, event):
+    async def send_balance_data(self, event):
         await self.send(text_data=json.dumps({
-            "balance": event["balance"]
+            "balance": str(event["new_balance"])
         }))

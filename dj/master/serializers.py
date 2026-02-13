@@ -40,11 +40,6 @@ class AddMoney(serializers.Serializer):
                 userLock.balance = F('balance') + balance
                 userLock.save(update_fields=['balance'])
                 userLock.refresh_from_db()
-
-                async_to_sync(channel_layer.group_send)(
-                f'user_{userLock.id}',{'type': 'balance_update', 'balance': str(userLock.balance)}
-                )
-
                 return userLock
         except:
             raise serializers.ValidationError({'error':'TransactionLoss'})
@@ -95,3 +90,55 @@ class LoginSerializer(serializers.Serializer):
             attrs['access_token'] = str(refresh.access_token)
 
             return attrs
+        
+class MoneyTransfer(serializers.Serializer):
+
+    userId = serializers.CharField()
+    balance = serializers.DecimalField(max_digits=12, decimal_places=2)
+    password = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        user = self.context.get('request').user
+        password = attrs['password']
+        balance = attrs['balance']
+        receiver = attrs['userId']
+
+        receiver_filter = Server.objects.filter(username=receiver)
+        receiver_out = receiver_filter.first()
+        
+        if not user.check_password(password):
+            raise serializers.ValidationError('password')
+        elif not receiver_filter.exists():
+            raise serializers.ValidationError('receiver')
+        elif user.username == receiver:
+            raise serializers.ValidationError('self')
+        elif balance < 50:
+            raise serializers.ValidationError('balance_zoro')
+        elif balance > 30000:
+            raise serializers.ValidationError('balance_limit')
+        
+        attrs['receiver'] = receiver_out
+        # print(attrs)
+        return attrs
+    
+    def update(self, instance, validated_data):
+
+        receiver = validated_data['receiver']
+        balance = validated_data['balance']
+        # print(receiver)
+        try:
+            with transaction.atomic():
+                userLock = Server.objects.select_for_update().get(id=instance.id)
+                userLock.balance = F('balance') - balance
+                userLock.save(update_fields=['balance'])
+                userLock.refresh_from_db()
+
+                receiverLock = Server.objects.select_for_update().get(id=receiver.id)            
+                receiverLock.balance = F('balance') + balance
+                receiverLock.save(update_fields=['balance'])
+                receiverLock.refresh_from_db()
+
+                return userLock, receiverLock
+
+        except Exception as e:
+            raise serializers.ValidationError({'Error': f'{e} Transation not Valid!'})
