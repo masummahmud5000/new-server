@@ -112,6 +112,8 @@ class MoneyTransfer(serializers.Serializer):
             raise serializers.ValidationError('receiver')
         elif user.username == receiver:
             raise serializers.ValidationError('self')
+        elif user.balance < balance:
+            raise serializers.ValidationError('balance-')
         elif balance < 50:
             raise serializers.ValidationError('balance_zoro')
         elif balance > 30000:

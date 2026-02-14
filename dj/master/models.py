@@ -25,10 +25,16 @@ class MyUserManager(BaseUserManager):
         return user
     
 class Server(AbstractBaseUser, PermissionsMixin):
-    name = models.CharField(max_length=15)
-    username = models.CharField(max_length=30, unique=True)
+    name = models.CharField(max_length=30)
+    username = models.CharField( db_index=True ,max_length=100, unique=True)
     balance = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
     joinDate = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['username'],
+            name='user_btree_idx'
+        ),]
 
     is_active = models.BooleanField(default=True)
     is_superuser = models.BooleanField(default=False)
